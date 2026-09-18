@@ -1,4 +1,4 @@
-use std::{io::{Write, stdin, stdout}, process::Command};
+use std::{env, io::{Write, stdin, stdout}, path::Path, process::Command};
 
 fn main() {
     loop {
@@ -16,12 +16,25 @@ fn main() {
         let command = parts.next().unwrap();
         let args = parts;
 
-        let mut child = Command::new(command)
-            .args(args)
-            .spawn()
-            .unwrap();
+        match command {
+            "cd" => {
+                // default's to '/'
+                // as new dir if one was not provided
+                let new_dir = args.peekable().peek().map_or("/", |x| *x);
+                let root = Path::new(new_dir);
+                if let Err(e) = env::set_current_dir(&root) {
+                    eprintln!("{}", e);
+                }
+            },
+            command => {
+                let mut child = Command::new(command)
+                    .args(args)
+                    .spawn()
+                    .unwrap();
 
-        // dont accept another command until this one completes
-        child.wait();
+                // dont accept another command until this one completes
+                child.wait();
+            }
+        }
     }
 }
